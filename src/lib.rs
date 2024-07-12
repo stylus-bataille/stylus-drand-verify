@@ -4,8 +4,10 @@
 #![cfg_attr(not(feature = "export-abi"), no_main)]
 extern crate alloc;
 
+mod drand_verify;
+
 use alloy_primitives::hex_literal::hex;
-use drand_verify::{Pubkey,G2PubkeyRfc};
+use crate::drand_verify::{Pubkey,G2PubkeyRfc};
 
 /// Use an efficient WASM allocator.
 #[global_allocator]
