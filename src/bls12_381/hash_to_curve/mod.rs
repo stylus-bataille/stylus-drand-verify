@@ -9,7 +9,7 @@ pub(crate) mod chain;
 
 mod expand_msg;
 pub use self::expand_msg::{
-    ExpandMessage, ExpandMessageState, ExpandMsgXmd, ExpandMsgXof, InitExpandMessage,
+    ExpandMessage, ExpandMessageState, ExpandMsgXmd, InitExpandMessage,
 };
 
 mod map_g1;

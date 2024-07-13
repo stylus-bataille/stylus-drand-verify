@@ -4,7 +4,7 @@ use crate::bls12_381::{
 };
 use crate::bls12_381::pairing;
 use pairing::{group::Group, MultiMillerLoop};
-use sha2::{Digest, Sha256};
+use crate::sha2::sha2;
 
 use crate::drand_verify::points::{
     g1_from_fixed, g1_from_fixed_unchecked, g1_from_variable, g2_from_fixed,
@@ -113,7 +113,7 @@ impl Pubkey for G1Pubkey {
 
     fn msg_to_curve(msg: &[u8]) -> Self::Other {
         let g: G2Projective =
-            HashToCurve::<ExpandMsgXmd<sha2::Sha256>>::hash_to_curve(msg, DOMAIN_HASH_TO_G2);
+            HashToCurve::<ExpandMsgXmd>::hash_to_curve(msg, DOMAIN_HASH_TO_G2);
         G2(g.into())
     }
 
@@ -173,7 +173,7 @@ impl Pubkey for G2PubkeyFastnet {
         // The usage of DOMAIN_HASH_TO_G2 here is needed to be compatible to a bug in drand's fastnet.
         // See https://github.com/noislabs/drand-verify/pull/22 for more information about that topic.
         let g: G1Projective =
-            HashToCurve::<ExpandMsgXmd<sha2::Sha256>>::hash_to_curve(msg, DOMAIN_HASH_TO_G2);
+            HashToCurve::<ExpandMsgXmd>::hash_to_curve(msg, DOMAIN_HASH_TO_G2);
         G1(g.into())
     }
 
@@ -239,7 +239,7 @@ impl Pubkey for G2PubkeyRfc {
 
     fn msg_to_curve(msg: &[u8]) -> Self::Other {
         let g: G1Projective =
-            HashToCurve::<ExpandMsgXmd<sha2::Sha256>>::hash_to_curve(msg, DOMAIN_HASH_TO_G1);
+            HashToCurve::<ExpandMsgXmd>::hash_to_curve(msg, DOMAIN_HASH_TO_G1);
         G1(g.into())
     }
 
@@ -302,10 +302,7 @@ fn fast_pairing_equality(p: &G1Affine, q: &G2Affine, r: &G1Affine, s: &G2Affine)
 }
 
 fn message(current_round: u64, prev_sig: &[u8]) -> [u8; 32] {
-    let mut hasher = Sha256::default();
-    hasher.update(prev_sig);
-    hasher.update(round_to_bytes(current_round));
-    hasher.finalize().into()
+    sha2(&round_to_bytes(current_round))
 }
 
 /// https://github.com/drand/drand-client/blob/master/wasm/chain/verify.go#L28-L33

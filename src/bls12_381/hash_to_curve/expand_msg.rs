@@ -13,7 +13,8 @@ use crate::bls12_381::generic_array::{
     ArrayLength, GenericArray,
 };
 
-#[cfg(feature = "alloc")]
+use crate::sha2::sha2;
+
 use alloc::vec::Vec;
 
 const OVERSIZE_DST_SALT: &[u8] = b"H2C-OVERSIZE-DST-";
@@ -24,42 +25,22 @@ const OVERSIZE_DST_SALT: &[u8] = b"H2C-OVERSIZE-DST-";
 ///
 /// [dst]: https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-hash-to-curve-12#section-5.4.3
 #[derive(Debug)]
-enum ExpandMsgDst<'x, L: ArrayLength<u8>> {
+enum ExpandMsgDst<'x> {
     /// DST produced by hashing a very long (> 255 chars) input DST.
-    Hashed(GenericArray<u8, L>),
+    Hashed([u8; 32]),
     /// A raw input DST (<= 255 chars).
     Raw(&'x [u8]),
 }
 
-impl<'x, L: ArrayLength<u8>> ExpandMsgDst<'x, L> {
-    /// Produces a DST for use with `expand_message_xof`.
-    pub fn process_xof<H>(dst: &'x [u8]) -> Self
-    where
-        H: Default + Update + ExtendableOutputDirty,
-    {
-        if dst.len() > 255 {
-            let mut data = GenericArray::<u8, L>::default();
-            H::default()
-                .chain(OVERSIZE_DST_SALT)
-                .chain(&dst)
-                .finalize_xof_dirty()
-                .read(&mut data);
-            Self::Hashed(data)
-        } else {
-            Self::Raw(dst)
-        }
-    }
-
+impl<'x> ExpandMsgDst<'x> {
     /// Produces a DST for use with `expand_message_xmd`.
-    pub fn process_xmd<H>(dst: &'x [u8]) -> Self
-    where
-        H: Digest<OutputSize = L>,
+    pub fn process_xmd(dst: &'x [u8]) -> Self
     {
-        if dst.len() > 255 {
-            Self::Hashed(H::new().chain(OVERSIZE_DST_SALT).chain(&dst).finalize())
-        } else {
+        //if dst.len() > 255 {
+            //Self::Hashed(H::new().chain(OVERSIZE_DST_SALT).chain(&dst).finalize())
+        //} else {
             Self::Raw(dst)
-        }
+        //}
     }
 
     /// Returns the raw bytes of the DST.
@@ -73,7 +54,7 @@ impl<'x, L: ArrayLength<u8>> ExpandMsgDst<'x, L> {
     /// Returns the length of the DST.
     pub fn len(&'x self) -> usize {
         match self {
-            Self::Hashed(_) => L::to_usize(),
+            Self::Hashed(_) => 32,
             Self::Raw(buf) => buf.len(),
         }
     }
@@ -117,64 +98,6 @@ pub trait ExpandMessageState<'x> {
     }
 }
 
-/// A generator for the output of `expand_message_xof` for a given
-/// extendable hash function, message, DST, and output length.
-///
-/// Implements [section 5.4.2 of `draft-irtf-cfrg-hash-to-curve-12`][expand_message_xof]
-/// with `k = 128`.
-///
-/// [expand_message_xof]: https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-hash-to-curve-12#section-5.4.2
-pub struct ExpandMsgXof<H: ExtendableOutputDirty> {
-    hash: <H as ExtendableOutputDirty>::Reader,
-    remain: usize,
-}
-
-impl<H: ExtendableOutputDirty> Debug for ExpandMsgXof<H> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.debug_struct("ExpandMsgXof")
-            .field("remain", &self.remain)
-            .finish()
-    }
-}
-
-impl<'x, H> ExpandMessageState<'x> for ExpandMsgXof<H>
-where
-    H: ExtendableOutputDirty,
-{
-    fn read_into(&mut self, output: &mut [u8]) -> usize {
-        let len = self.remain.min(output.len());
-        self.hash.read(&mut output[..len]);
-        self.remain -= len;
-        len
-    }
-
-    fn remain(&self) -> usize {
-        self.remain
-    }
-}
-
-impl<'x, H> InitExpandMessage<'x> for ExpandMsgXof<H>
-where
-    H: Default + Update + ExtendableOutputDirty,
-{
-    type Expander = Self;
-
-    fn init_expand(message: &[u8], dst: &[u8], len_in_bytes: usize) -> Self {
-        // Use U32 here for k = 128.
-        let dst = ExpandMsgDst::<U32>::process_xof::<H>(dst);
-        let hash = H::default()
-            .chain(message)
-            .chain((len_in_bytes as u16).to_be_bytes())
-            .chain(dst.data())
-            .chain([dst.len() as u8])
-            .finalize_xof_dirty();
-        Self {
-            hash,
-            remain: len_in_bytes,
-        }
-    }
-}
-
 /// Constructor for `expand_message_xmd` for a given digest hash function, message, DST,
 /// and output length.
 ///
@@ -182,7 +105,7 @@ where
 ///
 /// [expand_message_xmd]: https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-hash-to-curve-12#section-5.4.1
 #[derive(Debug)]
-pub struct ExpandMsgXmd<H: Digest>(PhantomData<H>);
+pub struct ExpandMsgXmd();
 
 /// A generator for the output of `expand_message_xmd` for a given
 /// digest hash function, message, DST, and output length.
@@ -190,16 +113,16 @@ pub struct ExpandMsgXmd<H: Digest>(PhantomData<H>);
 /// Implements [section 5.4.1 of `draft-irtf-cfrg-hash-to-curve-12`][expand_message_xmd].
 ///
 /// [expand_message_xmd]: https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-hash-to-curve-12#section-5.4.1
-pub struct ExpandMsgXmdState<'x, H: Digest> {
-    dst: ExpandMsgDst<'x, H::OutputSize>,
-    b_0: GenericArray<u8, H::OutputSize>,
-    b_i: GenericArray<u8, H::OutputSize>,
+pub struct ExpandMsgXmdState<'x> {
+    dst: ExpandMsgDst<'x>,
+    b_0: [u8; 32],
+    b_i: [u8; 32],
     i: usize,
     b_offs: usize,
     remain: usize,
 }
 
-impl<H: Digest> Debug for ExpandMsgXmdState<'_, H> {
+impl Debug for ExpandMsgXmdState<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("ExpandMsgXmdState")
             .field("remain", &self.remain)
@@ -207,34 +130,32 @@ impl<H: Digest> Debug for ExpandMsgXmdState<'_, H> {
     }
 }
 
-impl<'x, H> InitExpandMessage<'x> for ExpandMsgXmd<H>
-where
-    H: Digest + BlockInput,
+impl<'x> InitExpandMessage<'x> for ExpandMsgXmd
 {
-    type Expander = ExpandMsgXmdState<'x, H>;
+    type Expander = ExpandMsgXmdState<'x>;
 
     fn init_expand(message: &[u8], dst: &'x [u8], len_in_bytes: usize) -> Self::Expander {
-        let hash_size = <H as Digest>::OutputSize::to_usize();
+        let hash_size = 32;
         let ell = (len_in_bytes + hash_size - 1) / hash_size;
         if ell > 255 {
             panic!("Invalid ExpandMsgXmd usage: ell > 255");
         }
-        let dst = ExpandMsgDst::process_xmd::<H>(dst);
-        let b_0 = H::new()
-            .chain(GenericArray::<u8, <H as BlockInput>::BlockSize>::default())
-            .chain(message)
-            .chain((len_in_bytes as u16).to_be_bytes())
-            .chain([0u8])
-            .chain(dst.data())
-            .chain([dst.len() as u8])
-            .finalize();
+        let dst = ExpandMsgDst::process_xmd(dst);
+        let mut b_0_pre = Vec::with_capacity(0);
+        b_0_pre.extend_from_slice(&[0; 64]); // s_in_bytes
+        b_0_pre.extend_from_slice(message);
+        b_0_pre.extend_from_slice(&(len_in_bytes as u16).to_be_bytes());
+        b_0_pre.extend_from_slice(&[0u8]);
+        b_0_pre.extend_from_slice(dst.data());
+        b_0_pre.extend_from_slice(&[dst.len() as u8]);
+        let b_0 = sha2(&b_0_pre);
         // init with b_1
-        let b_i = H::new()
-            .chain(&b_0)
-            .chain([1u8])
-            .chain(dst.data())
-            .chain([dst.len() as u8])
-            .finalize();
+        let mut b_i_pre = Vec::with_capacity(0);
+        b_i_pre.extend_from_slice(&b_0);
+        b_i_pre.extend_from_slice(&[1u8]);
+        b_i_pre.extend_from_slice(dst.data());
+        b_i_pre.extend_from_slice(&[dst.len() as u8]);
+        let b_i = sha2(&b_i_pre);
         ExpandMsgXmdState {
             dst,
             b_0,
@@ -246,14 +167,12 @@ where
     }
 }
 
-impl<'x, H> ExpandMessageState<'x> for ExpandMsgXmdState<'x, H>
-where
-    H: Digest + BlockInput,
+impl<'x> ExpandMessageState<'x> for ExpandMsgXmdState<'x>
 {
     fn read_into(&mut self, output: &mut [u8]) -> usize {
         let read_len = self.remain.min(output.len());
         let mut offs = 0;
-        let hash_size = H::OutputSize::to_usize();
+        let hash_size = 32;
         while offs < read_len {
             let b_offs = self.b_offs;
             let mut copy_len = hash_size - b_offs;
@@ -268,12 +187,12 @@ where
                 for j in 0..hash_size {
                     b_prev_xor[j] ^= self.b_i[j];
                 }
-                self.b_i = H::new()
-                    .chain(b_prev_xor)
-                    .chain([self.i as u8])
-                    .chain(self.dst.data())
-                    .chain([self.dst.len() as u8])
-                    .finalize();
+                let mut b_i_pre = Vec::new();
+                b_i_pre.extend_from_slice(&b_prev_xor);
+                b_i_pre.extend_from_slice(&[self.i as u8]);
+                b_i_pre.extend_from_slice(self.dst.data());
+                b_i_pre.extend_from_slice(&[self.dst.len() as u8]);
+                self.b_i = sha2(&b_i_pre);
                 self.b_offs = 0;
                 self.i += 1;
             }
