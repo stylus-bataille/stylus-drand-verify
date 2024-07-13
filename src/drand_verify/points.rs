@@ -1,4 +1,4 @@
-use bls12_381::{G1Affine, G2Affine};
+use crate::bls12_381::{G1Affine, G2Affine};
 
 #[derive(Debug)]
 pub enum InvalidPoint {

@@ -419,19 +419,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bls12_381"
-version = "0.8.0"
-source = "git+https://github.com/bbjubjub2494/bls12_381#faef86f149d0c4e906db54d072bdd6701938faa0"
-dependencies = [
- "digest 0.9.0",
- "ff",
- "group",
- "pairing",
- "rand_core",
- "subtle",
-]
-
-[[package]]
 name = "bs58"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1311,7 +1298,6 @@ version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ded41244b729663b1e574f1b4fb731469f69f79c17667b5d776b16cda0479449"
 dependencies = [
- "bitvec",
  "rand_core",
  "subtle",
 ]
@@ -3239,15 +3225,20 @@ version = "0.1.6"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
- "bls12_381",
+ "digest 0.9.0",
  "ethers",
  "eyre",
+ "ff",
+ "group",
  "hex",
  "mini-alloc",
  "pairing",
+ "rand_core",
  "sha2 0.9.9",
  "stylus-sdk",
+ "subtle",
  "tokio",
+ "zeroize",
 ]
 
 [[package]]
