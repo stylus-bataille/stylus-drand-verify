@@ -1,6 +1,6 @@
 [target.wasm32-unknown-unknown]
 rustflags = [
-  "-C", "link-arg=-zstack-size=8192",
+  "-C", "link-arg=-zstack-size=16384",
 ]
 
 [target.aarch64-apple-darwin]
