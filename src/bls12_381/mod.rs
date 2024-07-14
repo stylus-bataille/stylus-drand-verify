@@ -8,7 +8,6 @@
 //! * This implementation does not require the Rust standard library.
 //! * All operations are constant time unless explicitly noted.
 
-
 #[cfg(test)]
 mod tests;
 

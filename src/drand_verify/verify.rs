@@ -1,10 +1,10 @@
+use crate::bls12_381::pairing;
 use crate::bls12_381::{
     hash_to_curve::{ExpandMsgXmd, HashToCurve},
-    Bls12, G1Affine, G1Projective, G2Affine, G2Projective, G2Prepared,
+    Bls12, G1Affine, G1Projective, G2Affine, G2Prepared, G2Projective,
 };
-use crate::bls12_381::pairing;
-use pairing::{group::Group, MultiMillerLoop};
 use crate::sha2::sha2;
+use pairing::{group::Group, MultiMillerLoop};
 
 use crate::drand_verify::points::{
     g1_from_fixed, g1_from_fixed_unchecked, g1_from_variable, g2_from_fixed,
@@ -112,8 +112,7 @@ impl Pubkey for G1Pubkey {
     type Other = G2;
 
     fn msg_to_curve(msg: &[u8]) -> Self::Other {
-        let g: G2Projective =
-            HashToCurve::<ExpandMsgXmd>::hash_to_curve(msg, DOMAIN_HASH_TO_G2);
+        let g: G2Projective = HashToCurve::<ExpandMsgXmd>::hash_to_curve(msg, DOMAIN_HASH_TO_G2);
         G2(g.into())
     }
 
@@ -172,8 +171,7 @@ impl Pubkey for G2PubkeyFastnet {
     fn msg_to_curve(msg: &[u8]) -> Self::Other {
         // The usage of DOMAIN_HASH_TO_G2 here is needed to be compatible to a bug in drand's fastnet.
         // See https://github.com/noislabs/drand-verify/pull/22 for more information about that topic.
-        let g: G1Projective =
-            HashToCurve::<ExpandMsgXmd>::hash_to_curve(msg, DOMAIN_HASH_TO_G2);
+        let g: G1Projective = HashToCurve::<ExpandMsgXmd>::hash_to_curve(msg, DOMAIN_HASH_TO_G2);
         G1(g.into())
     }
 
@@ -238,8 +236,7 @@ impl Pubkey for G2PubkeyRfc {
     type Other = G1;
 
     fn msg_to_curve(msg: &[u8]) -> Self::Other {
-        let g: G1Projective =
-            HashToCurve::<ExpandMsgXmd>::hash_to_curve(msg, DOMAIN_HASH_TO_G1);
+        let g: G1Projective = HashToCurve::<ExpandMsgXmd>::hash_to_curve(msg, DOMAIN_HASH_TO_G1);
         G1(g.into())
     }
 
@@ -279,7 +276,10 @@ impl Pubkey for G2PubkeyRfc {
 
 #[derive(Debug)]
 pub enum VerificationError {
-    InvalidPoint { field: &'static str, err: InvalidPoint },
+    InvalidPoint {
+        field: &'static str,
+        err: InvalidPoint,
+    },
 }
 
 /// Checks if e(p, q) == e(r, s)

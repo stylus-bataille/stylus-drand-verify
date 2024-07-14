@@ -4,13 +4,13 @@
 #![cfg_attr(not(feature = "export-abi"), no_main)]
 extern crate alloc;
 
-mod drand_verify;
 mod bls12_381;
+mod drand_verify;
 mod sha2;
 
+use crate::drand_verify::{G2PubkeyRfc, Pubkey, G1};
 use alloy_primitives::hex_literal::hex;
 use stylus_sdk::abi::Bytes;
-use crate::drand_verify::{G1,Pubkey,G2PubkeyRfc};
 
 /// Use an efficient WASM allocator.
 #[global_allocator]

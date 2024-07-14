@@ -8,9 +8,7 @@ use subtle::Choice;
 pub(crate) mod chain;
 
 mod expand_msg;
-pub use self::expand_msg::{
-    ExpandMessage, ExpandMessageState, ExpandMsgXmd, InitExpandMessage,
-};
+pub use self::expand_msg::{ExpandMessage, ExpandMessageState, ExpandMsgXmd, InitExpandMessage};
 
 mod map_g1;
 mod map_g2;

@@ -34,13 +34,15 @@ enum ExpandMsgDst<'x> {
 
 impl<'x> ExpandMsgDst<'x> {
     /// Produces a DST for use with `expand_message_xmd`.
-    pub fn process_xmd(dst: &'x [u8]) -> Self
-    {
-        //if dst.len() > 255 {
-            //Self::Hashed(H::new().chain(OVERSIZE_DST_SALT).chain(&dst).finalize())
-        //} else {
+    pub fn process_xmd(dst: &'x [u8]) -> Self {
+        if dst.len() > 255 {
+            let mut buf = Vec::with_capacity(OVERSIZE_DST_SALT.len() + dst.len());
+            buf.extend_from_slice(OVERSIZE_DST_SALT);
+            buf.extend_from_slice(&dst);
+            Self::Hashed(sha2(&buf))
+        } else {
             Self::Raw(dst)
-        //}
+        }
     }
 
     /// Returns the raw bytes of the DST.
@@ -130,8 +132,7 @@ impl Debug for ExpandMsgXmdState<'_> {
     }
 }
 
-impl<'x> InitExpandMessage<'x> for ExpandMsgXmd
-{
+impl<'x> InitExpandMessage<'x> for ExpandMsgXmd {
     type Expander = ExpandMsgXmdState<'x>;
 
     fn init_expand(message: &[u8], dst: &'x [u8], len_in_bytes: usize) -> Self::Expander {
@@ -167,8 +168,7 @@ impl<'x> InitExpandMessage<'x> for ExpandMsgXmd
     }
 }
 
-impl<'x> ExpandMessageState<'x> for ExpandMsgXmdState<'x>
-{
+impl<'x> ExpandMessageState<'x> for ExpandMsgXmdState<'x> {
     fn read_into(&mut self, output: &mut [u8]) -> usize {
         let read_len = self.remain.min(output.len());
         let mut offs = 0;
