@@ -1,5 +1,3 @@
-![Image](./header.png)
-
 # DRand Verification in Smart Contracts
 
 This project allows to verify BLS signatures onchain on Ethereum, using the power of Arbitrum Stylus
