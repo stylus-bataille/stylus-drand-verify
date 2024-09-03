@@ -1,4 +1,3 @@
-use crate::bls12_381::pairing;
 use crate::bls12_381::{
     hash_to_curve::{ExpandMsgXmd, HashToCurve},
     Bls12, G1Affine, G1Projective, G2Affine, G2Prepared, G2Projective,

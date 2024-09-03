@@ -42,9 +42,9 @@ const BLS_X_IS_NEGATIVE: bool = true;
 
 mod pairings;
 
-pub use pairings::{pairing, Bls12, Gt, MillerLoopResult};
+pub use pairings::Bls12;
 
-pub use pairings::{multi_miller_loop, G2Prepared};
+pub use pairings::G2Prepared;
 
 /// Use the generic_array re-exported by digest to avoid a version mismatch
 pub(crate) use digest::generic_array;

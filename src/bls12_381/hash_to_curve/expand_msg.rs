@@ -1,17 +1,10 @@
 //! This module implements message expansion consistent with the
 //! hash-to-curve RFC drafts 7 through 10
 
-use core::{
-    fmt::{self, Debug, Formatter},
-    marker::PhantomData,
-};
+use core::fmt::{self, Debug, Formatter};
 
-use digest::{BlockInput, Digest, ExtendableOutputDirty, Update, XofReader};
+use digest::Digest;
 
-use crate::bls12_381::generic_array::{
-    typenum::{Unsigned, U32},
-    ArrayLength, GenericArray,
-};
 
 use crate::sha2::sha2;
 

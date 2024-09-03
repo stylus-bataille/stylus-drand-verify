@@ -11,7 +11,6 @@ use ethers::{
     signers::{LocalWallet, Signer},
     types::Address,
 };
-use eyre::eyre;
 use std::io::{BufRead, BufReader};
 use std::str::FromStr;
 use std::sync::Arc;
