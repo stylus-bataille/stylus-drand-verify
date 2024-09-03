@@ -5,12 +5,12 @@ This project allows to verify BLS signatures onchain on Ethereum, using the powe
 ## Demo
 
 The contract is deployed on Arbitrum Sepolia at 
-0x7d0dA1D76929fdc256D0CF33829Ce38AfD14a1e7
+0xDe3201BDA62624627db7f1d72ee8e38415651506
 and can be used like so
 ```sh
 cast call \
          --rpc-url https://sepolia-rollup.arbitrum.io/rpc \
-         0x7d0dA1D76929fdc256D0CF33829Ce38AfD14a1e7 \
+         0xDe3201BDA62624627db7f1d72ee8e38415651506 \
          'verify(uint64 round_number, bytes calldata sig)' \
          9367912 \
          845091b99635a8a5f93a15cd8622fae0c7ee5307fb5b888dc67ee4fe997b5b326dbd637bd7ab39e3188fd507ea94b314
