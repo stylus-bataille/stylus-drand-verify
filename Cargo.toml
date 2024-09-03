@@ -22,6 +22,11 @@ eyre = "0.6.8"
 [features]
 export-abi = ["stylus-sdk/export-abi"]
 debug = ["stylus-sdk/debug"]
+alloc = []
+bits = []
+experimental = []
+std = []
+zeroize = []
 
 [[bin]]
 name = "stylus-drand-verify"

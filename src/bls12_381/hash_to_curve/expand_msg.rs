@@ -3,8 +3,6 @@
 
 use core::fmt::{self, Debug, Formatter};
 
-use digest::Digest;
-
 
 use crate::sha2::sha2;
 
@@ -31,7 +29,7 @@ impl<'x> ExpandMsgDst<'x> {
         if dst.len() > 255 {
             let mut buf = Vec::with_capacity(OVERSIZE_DST_SALT.len() + dst.len());
             buf.extend_from_slice(OVERSIZE_DST_SALT);
-            buf.extend_from_slice(&dst);
+            buf.extend_from_slice(dst);
             Self::Hashed(sha2(&buf))
         } else {
             Self::Raw(dst)

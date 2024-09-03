@@ -300,7 +300,7 @@ fn fast_pairing_equality(p: &G1Affine, q: &G2Affine, r: &G1Affine, s: &G2Affine)
     value.is_identity().into()
 }
 
-fn message(current_round: u64, prev_sig: &[u8]) -> [u8; 32] {
+fn message(current_round: u64, _prev_sig: &[u8]) -> [u8; 32] {
     sha2(&round_to_bytes(current_round))
 }
 
